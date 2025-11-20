@@ -3,13 +3,13 @@ from config import Config
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
 # -------------------- ROUTES --------------------
-
 @app.route('/')
 def home():
     return redirect(url_for('login'))
@@ -75,11 +75,15 @@ def view_patients():
 # ---------- Reports ----------
 @app.route('/reports')
 def reports():
-    # Example: basic summary
     patient_count = Patient.query.count()
-    return render_template('reports.html', patient_count=patient_count)
+    appointment_count = Appointment.query.count()
+    bill_count = Bill.query.count()
+    return render_template('reports.html',
+                           patient_count=patient_count,
+                           appointment_count=appointment_count,
+                           bill_count=bill_count)
 
-# ---------- Add more routes: Appointments, Billing, MedicalHistory ----------
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# ---------- Run App ----------
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port, debug=False)
