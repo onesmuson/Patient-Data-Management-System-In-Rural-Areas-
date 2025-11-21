@@ -9,6 +9,7 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), default='HealthWorker')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Patient(db.Model):
     __tablename__ = 'patient'
@@ -20,6 +21,7 @@ class Patient(db.Model):
     allergies = db.Column(db.Text)
     medical_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     medical_histories = db.relationship('MedicalHistory', backref='patient', lazy=True, cascade="all, delete-orphan")
     appointments = db.relationship('Appointment', backref='patient', lazy=True, cascade="all, delete-orphan")
     bills = db.relationship('Bill', backref='patient', lazy=True, cascade="all, delete-orphan")
@@ -41,6 +43,7 @@ class Appointment(db.Model):
     doctor_name = db.Column(db.String(100))
     appointment_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='Scheduled')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Bill(db.Model):
     __tablename__ = 'bill'
