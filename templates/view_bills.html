@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Billing History</h2>
+<table class="table">
+  <thead><tr><th>Bill ID</th><th>Patient</th><th>Total</th><th>Date</th></tr></thead>
+  <tbody>
+    {% for b in bills %}
+    <tr>
+      <td>{{ b.id }}</td>
+      <td>{{ b.patient.first_name }} {{ b.patient.last_name }}</td>
+      <td>{{ '%.2f'|format(b.total_amount) }}</td>
+      <td>{{ b.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
