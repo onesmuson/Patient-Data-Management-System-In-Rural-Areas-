@@ -1,41 +1,53 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, session
-from models import db, User, Patient, MedicalHistory, Appointment, Bill
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 # ----------------------------
-# FLASK APP INITIALIZATION
+# IMPORT MODELS
+# ----------------------------
+from models import db, User, Patient, MedicalHistory, Appointment, Bill
+
+# ----------------------------
+# FLASK APP SETUP
 # ----------------------------
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret")
 
-# DATABASE CONFIGURATION FOR RENDER
+# DATABASE CONFIGURATION
 database_url = os.getenv("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
 # ----------------------------
-# AUTO DATABASE + ADMIN CREATION
+# AUTO DB + ADMIN CREATION
 # ----------------------------
 @app.before_first_request
 def initialize_database():
     db.create_all()
     admin_username = os.getenv("ADMIN_USERNAME")
     admin_password = os.getenv("ADMIN_PASSWORD")
+
     if admin_username and admin_password:
         if not User.query.filter_by(username=admin_username).first():
             admin = User(username=admin_username, role="admin")
             admin.set_password(admin_password)
             db.session.add(admin)
             db.session.commit()
-            print("Admin user created automatically.")
+            print("Admin created automatically")
+        else:
+            print("Admin already exists")
+    else:
+        print("ADMIN_USERNAME / ADMIN_PASSWORD not set")
 
 # ----------------------------
-# AUTH ROUTES
+# ROUTES
 # ----------------------------
 @app.route("/")
 def home():
@@ -90,9 +102,6 @@ def forgot_password():
         return redirect("/login")
     return render_template("forgot_password.html")
 
-# ----------------------------
-# DASHBOARD
-# ----------------------------
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -114,7 +123,7 @@ def add_patient():
             phone=request.form["phone"],
             address=request.form["address"],
             condition=request.form["condition"],
-            date_registered=datetime.now()
+            date_registered=datetime.now(),
         )
         db.session.add(patient)
         db.session.commit()
@@ -124,10 +133,7 @@ def add_patient():
 
 @app.route("/view_patients")
 def view_patients():
-    if "user_id" not in session:
-        return redirect("/login")
-    patients = Patient.query.all()
-    return render_template("view_patients.html", patients=patients)
+    return render_template("view_patients.html", patients=Patient.query.all())
 
 # ----------------------------
 # MEDICAL HISTORY
@@ -149,9 +155,11 @@ def add_medical_history(patient_id):
 
 @app.route("/view_medical_history/<int:patient_id>")
 def view_medical_history(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    history = MedicalHistory.query.filter_by(patient_id=patient_id).all()
-    return render_template("view_medical_history.html", patient=patient, history=history)
+    return render_template(
+        "view_medical_history.html",
+        patient=Patient.query.get_or_404(patient_id),
+        history=MedicalHistory.query.filter_by(patient_id=patient_id).all()
+    )
 
 # ----------------------------
 # APPOINTMENTS
@@ -173,9 +181,11 @@ def add_appointment(patient_id):
 
 @app.route("/view_appointments/<int:patient_id>")
 def view_appointments(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    appointments = Appointment.query.filter_by(patient_id=patient_id).all()
-    return render_template("view_appointments.html", patient=patient, appointments=appointments)
+    return render_template(
+        "view_appointments.html",
+        patient=Patient.query.get_or_404(patient_id),
+        appointments=Appointment.query.filter_by(patient_id=patient_id).all()
+    )
 
 # ----------------------------
 # BILLING
@@ -198,13 +208,14 @@ def add_bill(patient_id):
 
 @app.route("/view_bills/<int:patient_id>")
 def view_bills(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    bills = Bill.query.filter_by(patient_id=patient_id).all()
-    return render_template("view_bills.html", patient=patient, bills=bills)
+    return render_template(
+        "view_bills.html",
+        patient=Patient.query.get_or_404(patient_id),
+        bills=Bill.query.filter_by(patient_id=patient_id).all()
+    )
 
 # ----------------------------
 # RUN APP
 # ----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
