@@ -1,10 +1,6 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_secret_key')
-    # Render provides a DATABASE_URL environment variable for Postgres
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'postgresql://username:password@localhost:5432/pdms_db'
-    )
+    SECRET_KEY = os.getenv("SECRET_KEY", "default_secret")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
