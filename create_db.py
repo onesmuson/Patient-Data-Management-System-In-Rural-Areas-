@@ -1,11 +1,16 @@
-# create_db.py - create tables and default admin user
+"""
+create_db.py
+Creates database tables and a default admin user.
+Run locally: python create_db.py
+Or run in Render shell after DATABASE_URL is set.
+"""
+import os
+from werkzeug.security import generate_password_hash
 from models import db, User
 from app import app
-from werkzeug.security import generate_password_hash
-import os
 
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin@123')  # set secure value in Render
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin@123')  # change in production
 
 with app.app_context():
     db.create_all()
