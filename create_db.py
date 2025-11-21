@@ -1,6 +1,23 @@
+# create_db.py - create tables and default admin user
+from models import db, User
 from app import app
-from models import db
+from werkzeug.security import generate_password_hash
+import os
+
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin@123')  # set secure value in Render
 
 with app.app_context():
     db.create_all()
-    print("All database tables created successfully!")
+    if not User.query.filter_by(username=ADMIN_USERNAME).first():
+        admin = User(
+            username=ADMIN_USERNAME,
+            password_hash=generate_password_hash(ADMIN_PASSWORD),
+            role='Admin'
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Created admin user: {ADMIN_USERNAME}")
+    else:
+        print(f"Admin user '{ADMIN_USERNAME}' already exists.")
+    print("Database tables created/verified successfully.")
