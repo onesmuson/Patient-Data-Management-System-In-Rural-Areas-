@@ -5,12 +5,13 @@ from datetime import datetime
 from config import Config
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
 
+# App init
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 app.secret_key = app.config.get('SECRET_KEY', 'dev_secret_key')
 
-# simple login_required decorator
+# helper decorator
 from functools import wraps
 def login_required(fn):
     @wraps(fn)
@@ -21,6 +22,7 @@ def login_required(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+# Routes
 @app.route('/')
 def index():
     if 'user_id' in session:
@@ -73,7 +75,7 @@ def logout():
     flash('Logged out', 'success')
     return redirect(url_for('login'))
 
-# Forgot password -> verifies username and shows reset UI
+# Forgot password -> verify username then show reset UI
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -85,9 +87,8 @@ def forgot_password():
         if not user:
             flash('No account found with that username', 'danger')
             return redirect(url_for('forgot_password'))
-        # store username in session for reset flow
         session['pw_reset_user'] = user.username
-        flash('User verified. Enter new password now.', 'info')
+        flash('User verified. Enter new password below.', 'info')
         return redirect(url_for('reset_password'))
     return render_template('forgot_password.html')
 
@@ -96,7 +97,7 @@ def forgot_password():
 def reset_password():
     username = session.get('pw_reset_user')
     if not username:
-        flash('Password reset session not found. Start again.', 'warning')
+        flash('Password reset session expired. Start again.', 'warning')
         return redirect(url_for('forgot_password'))
     user = User.query.filter_by(username=username).first()
     if not user:
@@ -115,7 +116,7 @@ def reset_password():
         user.password_hash = generate_password_hash(new_pw)
         db.session.commit()
         session.pop('pw_reset_user', None)
-        flash('Password reset successful, please login.', 'success')
+        flash('Password reset successful. Please login.', 'success')
         return redirect(url_for('login'))
     return render_template('reset_password.html', username=username)
 
@@ -134,7 +135,11 @@ def dashboard():
 def add_patient():
     if request.method == 'POST':
         dob_raw = request.form.get('dob')
-        dob = datetime.strptime(dob_raw, '%Y-%m-%d').date() if dob_raw else None
+        dob = None
+        try:
+            dob = datetime.strptime(dob_raw, '%Y-%m-%d').date() if dob_raw else None
+        except Exception:
+            dob = None
         patient = Patient(
             first_name=request.form.get('first_name','').strip(),
             last_name=request.form.get('last_name','').strip(),
@@ -197,7 +202,11 @@ def view_medical_history(patient_id):
 def add_appointment():
     patients = Patient.query.order_by(Patient.last_name).all()
     if request.method == 'POST':
-        appt_dt = datetime.strptime(request.form.get('appointment_date'), '%Y-%m-%dT%H:%M')
+        try:
+            appt_dt = datetime.strptime(request.form.get('appointment_date'), '%Y-%m-%dT%H:%M')
+        except Exception:
+            flash('Invalid date/time format', 'danger')
+            return redirect(url_for('add_appointment'))
         appointment = Appointment(
             patient_id=int(request.form.get('patient_id')),
             doctor_name=request.form.get('doctor_name'),
@@ -253,7 +262,7 @@ def reports():
                            appointment_count=Appointment.query.count(),
                            bill_count=Bill.query.count())
 
-# Ensure tables created at start
+# Create tables at startup (safe)
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
