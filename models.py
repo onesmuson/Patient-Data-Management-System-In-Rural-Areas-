@@ -1,53 +1,50 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 db = SQLAlchemy()
 
 class User(db.Model):
-    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), default='HealthWorker')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    role = db.Column(db.String(20), default="staff")
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
 
 class Patient(db.Model):
-    __tablename__ = 'patient'
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-    dob = db.Column(db.Date)
+    name = db.Column(db.String(100), nullable=False)
     gender = db.Column(db.String(10))
-    allergies = db.Column(db.Text)
-    medical_notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    age = db.Column(db.Integer)
+    phone = db.Column(db.String(20))
+    address = db.Column(db.String(200))
+    condition = db.Column(db.String(200))
+    date_registered = db.Column(db.DateTime, default=datetime.now)
 
-    medical_histories = db.relationship('MedicalHistory', backref='patient', lazy=True, cascade="all, delete-orphan")
-    appointments = db.relationship('Appointment', backref='patient', lazy=True, cascade="all, delete-orphan")
-    bills = db.relationship('Bill', backref='patient', lazy=True, cascade="all, delete-orphan")
 
 class MedicalHistory(db.Model):
-    __tablename__ = 'medical_history'
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
-    symptoms = db.Column(db.Text)
-    diagnosis = db.Column(db.Text)
-    prescribed_drug = db.Column(db.String(255))
-    allergies_note = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    patient_id = db.Column(db.Integer, db.ForeignKey("patient.id"))
+    details = db.Column(db.Text)
+    date_added = db.Column(db.DateTime, default=datetime.now)
+
 
 class Appointment(db.Model):
-    __tablename__ = 'appointment'
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
-    doctor_name = db.Column(db.String(100))
-    appointment_date = db.Column(db.DateTime)
-    status = db.Column(db.String(20), default='Scheduled')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    patient_id = db.Column(db.Integer, db.ForeignKey("patient.id"))
+    appointment_date = db.Column(db.String(50))
+    description = db.Column(db.Text)
+
 
 class Bill(db.Model):
-    __tablename__ = 'bill'
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
-    total_amount = db.Column(db.Float)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    patient_id = db.Column(db.Integer, db.ForeignKey("patient.id"))
+    amount = db.Column(db.Float)
+    description = db.Column(db.Text)
+    date = db.Column(db.DateTime, default=datetime.now)
