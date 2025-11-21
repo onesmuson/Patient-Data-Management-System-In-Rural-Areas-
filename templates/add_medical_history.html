@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Medical History for {{ patient.first_name }} {{ patient.last_name }}</h2>
+<form method="POST" class="form">
+  <label>Symptoms</label>
+  <textarea name="symptoms" required></textarea>
+  <label>Diagnosis</label>
+  <textarea name="diagnosis"></textarea>
+  <label>Prescribed Drug</label>
+  <input name="prescribed_drug">
+  <label>Allergies / Notes</label>
+  <textarea name="allergies_note"></textarea>
+  <div class="actions">
+    <button class="btn" type="submit">Save</button>
+    <a class="btn secondary" href="{{ url_for('view_medical_history', patient_id=patient.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
