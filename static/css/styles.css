@@ -4,6 +4,7 @@
   --dark: #333;
   --danger: #dc3545;
   --success: #28a745;
+  --info: #17a2b8;
 }
 
 body {
@@ -22,7 +23,7 @@ body {
 .topnav a { color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 6px; }
 .topnav a.danger { background: rgba(255,255,255,0.12); }
 
-.card { background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.card { background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 12px; }
 .grid { display: flex; gap: 12px; margin-bottom: 16px; }
 .stat { flex: 1; text-align: center; padding: 18px; }
 .big { font-size: 32px; font-weight: 700; display: block; margin-top: 8px; }
@@ -49,6 +50,12 @@ body {
 .flash.success { background: var(--success); color: #fff; }
 .flash.danger { background: var(--danger); color: #fff; }
 .flash.warning { background: #ffc107; color: #222; }
-.flash.info { background: #17a2b8; color: #fff; }
+.flash.info { background: var(--info); color: #fff; }
 
 .footer { text-align: center; padding: 18px 0; color: #666; margin-top: 30px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grid { flex-direction: column; }
+  .topnav { display: block; margin-top: 8px; }
+}
