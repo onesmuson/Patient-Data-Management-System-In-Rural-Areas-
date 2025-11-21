@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Medical History — {{ patient.first_name }} {{ patient.last_name }}</h2>
+{% if histories %}
+<table class="table">
+  <thead><tr><th>Date</th><th>Symptoms</th><th>Diagnosis</th><th>Drug</th></tr></thead>
+  <tbody>
+    {% for h in histories %}
+    <tr>
+      <td>{{ h.created_at }}</td>
+      <td>{{ h.symptoms }}</td>
+      <td>{{ h.diagnosis }}</td>
+      <td>{{ h.prescribed_drug }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No history recorded yet.</p>
+{% endif %}
+<a class="btn" href="{{ url_for('add_medical_history', patient_id=patient.id) }}">Add History</a>
+{% endblock %}
