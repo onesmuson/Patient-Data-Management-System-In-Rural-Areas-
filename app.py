@@ -1,32 +1,18 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-
-# ----------------------------
-# IMPORT MODELS AND CONFIG
-# ----------------------------
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
 from config import Config
 
-# ----------------------------
-# FLASK APP SETUP
-# ----------------------------
 app = Flask(__name__)
-app.config.from_object(Config)  # <--- Make sure config loads BEFORE db.init_app
-
-# Initialize database
+app.config.from_object(Config)
 db.init_app(app)
 
-# ----------------------------
-# AUTO DB + ADMIN CREATION
-# ----------------------------
 @app.before_first_request
 def initialize_database():
     db.create_all()
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
     admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
-
     if not User.query.filter_by(username=admin_username).first():
         admin = User(username=admin_username, role="admin")
         admin.set_password(admin_password)
