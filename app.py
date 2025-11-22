@@ -4,16 +4,22 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # ----------------------------
-# IMPORT MODELS AND CONFIG
+# IMPORT MODELS
 # ----------------------------
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
-from config import Config
 
 # ----------------------------
 # FLASK APP SETUP
 # ----------------------------
 app = Flask(__name__)
-app.config.from_object(Config)
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret")
+
+# ----------------------------
+# DATABASE CONFIGURATION FOR PYTHONANYWHERE MYSQL
+# ----------------------------
+# Replace 'YOUR_DB_PASSWORD' with the password you set for your MySQL database on PythonAnywhere
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://Onesmus:YOUR_DB_PASSWORD@Onesmus.mysql.pythonanywhere-services.com/Onesmus$default"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize database
 db.init_app(app)
