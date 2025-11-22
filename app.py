@@ -7,19 +7,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # IMPORT MODELS AND CONFIG
 # ----------------------------
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
+from config import Config
 
 # ----------------------------
 # FLASK APP SETUP
 # ----------------------------
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret")
-
-# ----------------------------
-# DATABASE CONFIGURATION
-# ----------------------------
-# Replace YOUR_DB_PASSWORD with your actual MySQL password
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://Onesmus:YOUR_DB_PASSWORD@Onesmus.mysql.pythonanywhere-services.com/Onesmus$default"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config.from_object(Config)  # <--- Make sure config loads BEFORE db.init_app
 
 # Initialize database
 db.init_app(app)
@@ -31,16 +25,16 @@ db.init_app(app)
 def initialize_database():
     db.create_all()
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
-    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")  # Replace with a strong password
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
 
     if not User.query.filter_by(username=admin_username).first():
         admin = User(username=admin_username, role="admin")
         admin.set_password(admin_password)
         db.session.add(admin)
         db.session.commit()
-        print(f"Admin user '{admin_username}' created successfully!")
+        print("Admin created automatically")
     else:
-        print(f"Admin user '{admin_username}' already exists.")
+        print("Admin already exists")
 
 # ----------------------------
 # ROUTES
@@ -214,4 +208,4 @@ def view_bills(patient_id):
 # RUN APP
 # ----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run()
