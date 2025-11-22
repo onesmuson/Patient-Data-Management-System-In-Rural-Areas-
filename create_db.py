@@ -1,28 +1,28 @@
-"""
-create_db.py
-Creates database tables and a default admin user.
-Run locally: python create_db.py
-Or run in Render shell after DATABASE_URL is set.
-"""
-import os
-from werkzeug.security import generate_password_hash
-from models import db, User
-from app import app
+from app import app, db
+from models import User
 
-ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin@123')  # change in production
-
+# Load Flask app context
 with app.app_context():
+    # Create all tables
     db.create_all()
-    if not User.query.filter_by(username=ADMIN_USERNAME).first():
-        admin = User(
-            username=ADMIN_USERNAME,
-            password_hash=generate_password_hash(ADMIN_PASSWORD),
-            role='Admin'
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print(f"Created admin user: {ADMIN_USERNAME}")
+    print("✅ Database tables created successfully")
+
+    # Get admin credentials from environment
+    import os
+    admin_username = os.getenv("ADMIN_USERNAME")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
+    if not admin_username or not admin_password:
+        print("⚠️ ADMIN_USERNAME or ADMIN_PASSWORD not set in environment variables")
     else:
-        print(f"Admin user '{ADMIN_USERNAME}' already exists.")
-    print("Database tables created/verified successfully.")
+        # Check if admin already exists
+        existing_admin = User.query.filter_by(username=admin_username).first()
+        if existing_admin:
+            print("ℹ️ Admin user already exists")
+        else:
+            # Create admin user
+            admin = User(username=admin_username, role="admin")
+            admin.set_password(admin_password)
+            db.session.add(admin)
+            db.session.commit()
+            print(f"✅ Admin user '{admin_username}' created successfully")
