@@ -1,26 +1,23 @@
 import os
 
 class Config:
-    # Essential for application security and sessions
-    SECRET_KEY = os.getenv("SECRET_KEY", "your_strong_fallback_secret_key") 
+    # Secret key for session management
+    SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key")  
 
-    # Retrieve MySQL components (matching environment variables from your dashboard)
-    MYSQL_USER = os.getenv("MYSQLUSER")
-    MYSQL_PASS = os.getenv("MYSQLPASSWORD")
-    MYSQL_HOST = os.getenv("MYSQLHOST") 
-    MYSQL_DB = os.getenv("MYSQLDATABASE") 
+    # MySQL database credentials
+    MYSQL_USER = os.getenv("MYSQLUSER")       # e.g., 'yourusername'
+    MYSQL_PASS = os.getenv("MYSQLPASSWORD")   # e.g., 'yourpassword'
+    MYSQL_HOST = os.getenv("MYSQLHOST")       # e.g., 'yourusername.mysql.pythonanywhere-services.com'
+    MYSQL_DB   = os.getenv("MYSQLDATABASE")   # e.g., 'yourusername$patient_db'
 
     # Construct the SQLAlchemy Database URI
     if all([MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB]):
-        # Format: mysql+mysqlconnector://user:password@host/database
-        # This uses the data retrieved from your environment variables.
+        # Use MySQL Connector
         SQLALCHEMY_DATABASE_URI = (
             f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASS}@{MYSQL_HOST}/{MYSQL_DB}"
         )
     else:
-        # If any essential variable is missing, the URI is set to None, 
-        # which will prevent the application from starting without credentials.
-        SQLALCHEMY_DATABASE_URI = None
+        SQLALCHEMY_DATABASE_URI = None  # prevents app from starting without credentials
 
-    # Standard setting for Flask-SQLAlchemy
+    # Standard SQLAlchemy setting
     SQLALCHEMY_TRACK_MODIFICATIONS = False
