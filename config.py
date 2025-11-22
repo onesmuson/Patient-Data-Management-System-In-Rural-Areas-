@@ -6,7 +6,7 @@ class Config:
 
     # MySQL database settings (PythonAnywhere)
     MYSQL_USER = "Onesmus"  # your PythonAnywhere username
-    MYSQL_PASSWORD = "YOUR_DB_PASSWORD"  # replace with your actual MySQL password
+    MYSQL_PASSWORD = "Masoo@4067"  # your actual MySQL password
     MYSQL_HOST = "Onesmus.mysql.pythonanywhere-services.com"
     MYSQL_DB = "Onesmus$default"
 
