@@ -1,25 +1,15 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
 
-# ----------------------------
-# IMPORT MODELS
-# ----------------------------
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
+from config import Config
 
 # ----------------------------
 # FLASK APP SETUP
 # ----------------------------
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret")
-
-# ----------------------------
-# DATABASE CONFIGURATION FOR PYTHONANYWHERE MYSQL
-# ----------------------------
-# Replace 'YOUR_DB_PASSWORD' with the password you set for your MySQL database on PythonAnywhere
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://Onesmus:YOUR_DB_PASSWORD@Onesmus.mysql.pythonanywhere-services.com/Onesmus$default"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config.from_object(Config)
 
 # Initialize database
 db.init_app(app)
@@ -217,4 +207,4 @@ def view_bills(patient_id):
 # RUN APP
 # ----------------------------
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=5000)
