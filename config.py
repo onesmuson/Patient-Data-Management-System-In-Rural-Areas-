@@ -5,10 +5,10 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "your_default_secret_key")
 
     # MySQL database settings (PythonAnywhere)
-    MYSQL_USER = "Onesmus"  # your PythonAnywhere username
-    MYSQL_PASSWORD = "Masoo@4067"  # your actual MySQL password
-    MYSQL_HOST = "Onesmus.mysql.pythonanywhere-services.com"
-    MYSQL_DB = "Onesmus$default"
+    MYSQL_USER = "Onesmuson"  # your PythonAnywhere username
+    MYSQL_PASSWORD = "Admin123"  # your updated MySQL password
+    MYSQL_HOST = "Onesmuson.mysql.pythonanywhere-services.com"
+    MYSQL_DB = "Onesmuson$default"
 
     # SQLAlchemy database URI
     SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DB}"
