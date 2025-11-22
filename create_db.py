@@ -1,24 +1,33 @@
 from app import app, db
 from models import User
+from werkzeug.security import generate_password_hash
+import os
 
 # ----------------------------
-# CREATE DATABASE AND TABLES
+# Configuration check
+# ----------------------------
+print("Using database URI:", app.config.get("SQLALCHEMY_DATABASE_URI"))
+
+# ----------------------------
+# Create database tables
 # ----------------------------
 with app.app_context():
+    print("Creating database tables...")
     db.create_all()
-    print("All tables created successfully!")
+    print("Database tables created successfully.")
 
     # ----------------------------
-    # CREATE ADMIN USER
+    # Create admin user
     # ----------------------------
-    admin_username = "admin"  # change if you want
-    admin_password = "admin123"  # change to a strong password
+    admin_username = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
 
-    if not User.query.filter_by(username=admin_username).first():
+    existing_admin = User.query.filter_by(username=admin_username).first()
+    if existing_admin:
+        print(f"Admin user '{admin_username}' already exists.")
+    else:
         admin = User(username=admin_username, role="admin")
-        admin.set_password(admin_password)
+        admin.password_hash = generate_password_hash(admin_password)
         db.session.add(admin)
         db.session.commit()
-        print(f"Admin user '{admin_username}' created successfully!")
-    else:
-        print(f"Admin user '{admin_username}' already exists.")
+        print(f"Admin user '{admin_username}' created successfully with password '{admin_password}'.")
