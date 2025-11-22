@@ -1,15 +1,25 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
+# ----------------------------
+# IMPORT MODELS AND CONFIG
+# ----------------------------
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
-from config import Config
 
 # ----------------------------
 # FLASK APP SETUP
 # ----------------------------
 app = Flask(__name__)
-app.config.from_object(Config)
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret")
+
+# ----------------------------
+# DATABASE CONFIGURATION
+# ----------------------------
+# Replace YOUR_DB_PASSWORD with your actual MySQL password
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://Onesmus:YOUR_DB_PASSWORD@Onesmus.mysql.pythonanywhere-services.com/Onesmus$default"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize database
 db.init_app(app)
@@ -20,20 +30,17 @@ db.init_app(app)
 @app.before_first_request
 def initialize_database():
     db.create_all()
-    admin_username = os.getenv("ADMIN_USERNAME")
-    admin_password = os.getenv("ADMIN_PASSWORD")
+    admin_username = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")  # Replace with a strong password
 
-    if admin_username and admin_password:
-        if not User.query.filter_by(username=admin_username).first():
-            admin = User(username=admin_username, role="admin")
-            admin.set_password(admin_password)
-            db.session.add(admin)
-            db.session.commit()
-            print("Admin created automatically")
-        else:
-            print("Admin already exists")
+    if not User.query.filter_by(username=admin_username).first():
+        admin = User(username=admin_username, role="admin")
+        admin.set_password(admin_password)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Admin user '{admin_username}' created successfully!")
     else:
-        print("ADMIN_USERNAME / ADMIN_PASSWORD not set")
+        print(f"Admin user '{admin_username}' already exists.")
 
 # ----------------------------
 # ROUTES
