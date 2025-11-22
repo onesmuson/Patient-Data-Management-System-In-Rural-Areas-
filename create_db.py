@@ -1,28 +1,24 @@
 from app import app, db
 from models import User
+import os
 
-# Load Flask app context
 with app.app_context():
     # Create all tables
     db.create_all()
-    print("✅ Database tables created successfully")
+    print("Database tables created successfully.")
 
-    # Get admin credentials from environment
-    import os
+    # Optional: create admin user if environment variables are set
     admin_username = os.getenv("ADMIN_USERNAME")
     admin_password = os.getenv("ADMIN_PASSWORD")
 
-    if not admin_username or not admin_password:
-        print("⚠️ ADMIN_USERNAME or ADMIN_PASSWORD not set in environment variables")
-    else:
-        # Check if admin already exists
-        existing_admin = User.query.filter_by(username=admin_username).first()
-        if existing_admin:
-            print("ℹ️ Admin user already exists")
-        else:
-            # Create admin user
+    if admin_username and admin_password:
+        if not User.query.filter_by(username=admin_username).first():
             admin = User(username=admin_username, role="admin")
             admin.set_password(admin_password)
             db.session.add(admin)
             db.session.commit()
-            print(f"✅ Admin user '{admin_username}' created successfully")
+            print(f"Admin user '{admin_username}' created successfully.")
+        else:
+            print(f"Admin user '{admin_username}' already exists.")
+    else:
+        print("ADMIN_USERNAME and ADMIN_PASSWORD environment variables not set.")
