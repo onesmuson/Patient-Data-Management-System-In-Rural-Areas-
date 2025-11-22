@@ -1,24 +1,27 @@
+import os
 from app import app, db
 from models import User
-import os
 
+# ----------------------------
+# CREATE DATABASE AND TABLES
+# ----------------------------
 with app.app_context():
-    # Create all tables
+    print("Creating database tables...")
     db.create_all()
-    print("Database tables created successfully.")
+    print("Tables created successfully!")
 
-    # Optional: create admin user if environment variables are set
-    admin_username = os.getenv("ADMIN_USERNAME")
-    admin_password = os.getenv("ADMIN_PASSWORD")
+    # ----------------------------
+    # CREATE ADMIN USER
+    # ----------------------------
+    admin_username = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")  # Replace with a strong password
 
-    if admin_username and admin_password:
-        if not User.query.filter_by(username=admin_username).first():
-            admin = User(username=admin_username, role="admin")
-            admin.set_password(admin_password)
-            db.session.add(admin)
-            db.session.commit()
-            print(f"Admin user '{admin_username}' created successfully.")
-        else:
-            print(f"Admin user '{admin_username}' already exists.")
+    # Check if admin already exists
+    if not User.query.filter_by(username=admin_username).first():
+        admin = User(username=admin_username, role="admin")
+        admin.set_password(admin_password)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Admin user '{admin_username}' created successfully!")
     else:
-        print("ADMIN_USERNAME and ADMIN_PASSWORD environment variables not set.")
+        print(f"Admin user '{admin_username}' already exists.")
