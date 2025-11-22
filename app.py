@@ -1,28 +1,21 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # ----------------------------
-# IMPORT MODELS
+# IMPORT MODELS AND CONFIG
 # ----------------------------
 from models import db, User, Patient, MedicalHistory, Appointment, Bill
+from config import Config
 
 # ----------------------------
 # FLASK APP SETUP
 # ----------------------------
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret")
+app.config.from_object(Config)
 
-# DATABASE CONFIGURATION
-database_url = os.getenv("DATABASE_URL")
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+# Initialize database
 db.init_app(app)
 
 # ----------------------------
@@ -218,4 +211,4 @@ def view_bills(patient_id):
 # RUN APP
 # ----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run()
