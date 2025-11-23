@@ -1,197 +1,193 @@
-import os
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from models import db, User, Patient, MedicalHistory, Appointment, Bill
 from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
-db.init_app(app)
 
-@app.before_first_request
-def initialize_database():
-    db.create_all()
-    admin_username = os.getenv("ADMIN_USERNAME", "admin")
-    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
-    if not User.query.filter_by(username=admin_username).first():
-        admin = User(username=admin_username, role="admin")
-        admin.set_password(admin_password)
-        db.session.add(admin)
-        db.session.commit()
-        print("Admin created automatically")
-    else:
-        print("Admin already exists")
+db = SQLAlchemy(app)
 
 # ----------------------------
-# ROUTES
+# IMPORT MODELS
 # ----------------------------
-@app.route("/")
+from models import User, Patient
+
+
+# ----------------------------
+# HOME PAGE
+# ----------------------------
+@app.route('/')
 def home():
-    return redirect(url_for("login"))
+    return redirect(url_for('login'))
 
-@app.route("/login", methods=["GET", "POST"])
+
+# ----------------------------
+# REGISTER USER
+# ----------------------------
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        fullname = request.form['fullname']
+        email = request.form['email']
+        password = request.form['password']
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("Email already registered. Try logging in.", "danger")
+            return redirect(url_for('register'))
+
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(fullname=fullname, email=email, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Account created successfully! Please log in.", "success")
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+
+# ----------------------------
+# LOGIN
+# ----------------------------
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            session["user_id"] = user.id
-            session["username"] = user.username
-            return redirect("/dashboard")
-        flash("Invalid login credentials", "danger")
-    return render_template("login.html")
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
 
-@app.route("/logout")
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            session['user_id'] = user.id
+            session['fullname'] = user.fullname
+            flash("Login successful!", "success")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Incorrect email or password!", "danger")
+            return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+
+# ----------------------------
+# LOGOUT
+# ----------------------------
+@app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for("login"))
+    flash("Logged out successfully.", "info")
+    return redirect(url_for('login'))
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        if User.query.filter_by(username=username).first():
-            flash("Username already exists", "danger")
-            return redirect("/register")
-        user = User(username=username, role="staff")
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        flash("Account created successfully", "success")
-        return redirect("/login")
-    return render_template("register.html")
 
-@app.route("/forgot-password", methods=["GET", "POST"])
-def forgot_password():
-    if request.method == "POST":
-        username = request.form["username"]
-        new_pass = request.form["new_password"]
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            flash("User not found", "danger")
-            return redirect("/forgot-password")
-        user.set_password(new_pass)
-        db.session.commit()
-        flash("Password reset successfully", "success")
-        return redirect("/login")
-    return render_template("forgot_password.html")
-
-@app.route("/dashboard")
+# ----------------------------
+# DASHBOARD
+# ----------------------------
+@app.route('/dashboard')
 def dashboard():
-    if "user_id" not in session:
-        return redirect("/login")
-    return render_template("dashboard.html")
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    patients = Patient.query.all()
+
+    return render_template('dashboard.html', patients=patients, fullname=session['fullname'])
+
 
 # ----------------------------
-# PATIENT CRUD
+# ADD PATIENT
 # ----------------------------
-@app.route("/add_patient", methods=["GET", "POST"])
+@app.route('/add_patient', methods=['GET', 'POST'])
 def add_patient():
-    if "user_id" not in session:
-        return redirect("/login")
-    if request.method == "POST":
-        patient = Patient(
-            name=request.form["name"],
-            gender=request.form["gender"],
-            age=request.form["age"],
-            phone=request.form["phone"],
-            address=request.form["address"],
-            condition=request.form["condition"],
-            date_registered=datetime.now(),
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        fullname = request.form['fullname']
+        age = request.form['age']
+        gender = request.form['gender']
+        address = request.form['address']
+        phone = request.form['phone']
+        symptoms = request.form['symptoms']
+
+        new_patient = Patient(
+            fullname=fullname,
+            age=age,
+            gender=gender,
+            address=address,
+            phone=phone,
+            symptoms=symptoms,
+            created_at=datetime.utcnow()
         )
-        db.session.add(patient)
+
+        db.session.add(new_patient)
         db.session.commit()
-        flash("Patient added successfully", "success")
-        return redirect("/view_patients")
-    return render_template("add_patient.html")
 
-@app.route("/view_patients")
-def view_patients():
-    return render_template("view_patients.html", patients=Patient.query.all())
+        flash("Patient added successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template('add_patient.html')
+
 
 # ----------------------------
-# MEDICAL HISTORY
+# VIEW PATIENT
 # ----------------------------
-@app.route("/add_medical_history/<int:patient_id>", methods=["GET", "POST"])
-def add_medical_history(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    if request.method == "POST":
-        history = MedicalHistory(
-            patient_id=patient_id,
-            details=request.form["details"],
-            date_added=datetime.now()
-        )
-        db.session.add(history)
+@app.route('/patient/<int:id>')
+def patient(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    patient = Patient.query.get_or_404(id)
+    return render_template('patient.html', patient=patient)
+
+
+# ----------------------------
+# DELETE PATIENT
+# ----------------------------
+@app.route('/delete_patient/<int:id>')
+def delete_patient(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    patient = Patient.query.get_or_404(id)
+
+    db.session.delete(patient)
+    db.session.commit()
+
+    flash("Patient deleted successfully!", "danger")
+    return redirect(url_for('dashboard'))
+
+
+# ----------------------------
+# UPDATE PATIENT
+# ----------------------------
+@app.route('/update_patient/<int:id>', methods=['GET', 'POST'])
+def update_patient(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    patient = Patient.query.get_or_404(id)
+
+    if request.method == 'POST':
+        patient.fullname = request.form['fullname']
+        patient.age = request.form['age']
+        patient.gender = request.form['gender']
+        patient.address = request.form['address']
+        patient.phone = request.form['phone']
+        patient.symptoms = request.form['symptoms']
+
         db.session.commit()
-        flash("Medical history added", "success")
-        return redirect(f"/view_medical_history/{patient_id}")
-    return render_template("add_medical_history.html", patient=patient)
 
-@app.route("/view_medical_history/<int:patient_id>")
-def view_medical_history(patient_id):
-    return render_template(
-        "view_medical_history.html",
-        patient=Patient.query.get_or_404(patient_id),
-        history=MedicalHistory.query.filter_by(patient_id=patient_id).all()
-    )
+        flash("Patient updated successfully!", "success")
+        return redirect(url_for('patient', id=id))
+
+    return render_template('update_patient.html', patient=patient)
+
 
 # ----------------------------
-# APPOINTMENTS
-# ----------------------------
-@app.route("/add_appointment/<int:patient_id>", methods=["GET", "POST"])
-def add_appointment(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    if request.method == "POST":
-        appointment = Appointment(
-            patient_id=patient_id,
-            appointment_date=request.form["date"],
-            description=request.form["description"]
-        )
-        db.session.add(appointment)
-        db.session.commit()
-        flash("Appointment added", "success")
-        return redirect(f"/view_appointments/{patient_id}")
-    return render_template("add_appointment.html", patient=patient)
-
-@app.route("/view_appointments/<int:patient_id>")
-def view_appointments(patient_id):
-    return render_template(
-        "view_appointments.html",
-        patient=Patient.query.get_or_404(patient_id),
-        appointments=Appointment.query.filter_by(patient_id=patient_id).all()
-    )
-
-# ----------------------------
-# BILLING
-# ----------------------------
-@app.route("/add_bill/<int:patient_id>", methods=["GET", "POST"])
-def add_bill(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    if request.method == "POST":
-        bill = Bill(
-            patient_id=patient_id,
-            amount=request.form["amount"],
-            description=request.form["description"],
-            date=datetime.now()
-        )
-        db.session.add(bill)
-        db.session.commit()
-        flash("Bill added successfully", "success")
-        return redirect(f"/view_bills/{patient_id}")
-    return render_template("add_bill.html", patient=patient)
-
-@app.route("/view_bills/<int:patient_id>")
-def view_bills(patient_id):
-    return render_template(
-        "view_bills.html",
-        patient=Patient.query.get_or_404(patient_id),
-        bills=Bill.query.filter_by(patient_id=patient_id).all()
-    )
-
-# ----------------------------
-# RUN APP
+# REQUIRED FOR PYTHONANYWHERE
 # ----------------------------
 if __name__ == "__main__":
     app.run()
