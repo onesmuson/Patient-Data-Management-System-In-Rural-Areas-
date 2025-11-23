@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Patient</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Edit Patient</h1>
+    <form method="POST">
+        <label>Name:</label><br>
+        <input type="text" name="name" value="{{ patient.name }}" required><br>
+        <label>Age:</label><br>
+        <input type="number" name="age" value="{{ patient.age }}" required><br>
+        <label>Medical History:</label><br>
+        <textarea name="history" rows="5">{{ patient.medical_history }}</textarea><br>
+        <button type="submit" class="btn">Update Patient</button>
+    </form>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</div>
+</body>
+</html>
