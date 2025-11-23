@@ -1,15 +1,54 @@
-{% extends "base.html" %}
-{% block content %}
-<h2>Dashboard</h2>
-<div class="grid">
-  <div class="card stat">Patients<br><span class="big">{{ patient_count }}</span></div>
-  <div class="card stat">Appointments<br><span class="big">{{ appointment_count }}</span></div>
-  <div class="card stat">Bills<br><span class="big">{{ bill_count }}</span></div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Patient Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Patient Management Dashboard</h1>
+    <div class="summary">
+        <div class="card">
+            <h2>Total Patients</h2>
+            <p>{{ total_patients }}</p>
+        </div>
+        <div class="card">
+            <h2>Actions</h2>
+            <a href="{{ url_for('add_patient') }}" class="btn">Add Patient</a>
+        </div>
+    </div>
 
-<div class="actions-row">
-  <a href="{{ url_for('add_patient') }}" class="btn">Add Patient</a>
-  <a href="{{ url_for('add_appointment') }}" class="btn">Schedule Appointment</a>
-  <a href="{{ url_for('add_bill') }}" class="btn">Create Bill</a>
+    <h2>All Patients</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Medical History</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in patients %}
+            <tr>
+                <td>{{ patient.id }}</td>
+                <td>{{ patient.name }}</td>
+                <td>{{ patient.age }}</td>
+                <td>{{ patient.medical_history }}</td>
+                <td>
+                    <a href="{{ url_for('edit_patient', id=patient.id) }}" class="btn-edit">Edit</a>
+                    <form action="{{ url_for('delete_patient', id=patient.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">No patients found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-{% endblock %}
+</body>
+</html>
